@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Map Test</title>
+        <style type="text/css">
+            html, body{
+                height: 100%;
+                width: 100%;
+                margin: 0;
+                border: 0;
+                padding: 0;
+            }
+            </style>
+    </head>
+    <body>
+        <!--<canvas id="crop1" height="1000" width="1500"></canvas>-->
+        <canvas id="c1" height="100" width="100"></canvas> 
+        <script type="text/javascript">
+            /* Cropping code
+            var canvas = document.getElementById("crop1");
+            var ctx = canvas.getContext('2d');
+            
+            var x = 0;
+            var y = 0;
+            
+            var render = function(){
+                ctx.drawImage(map, x*1500, y*1000, 1500, 1000, 0, 0 , 1500, 1000);
+            };
+            
+            canvas.addEventListener("click", function(){
+                render();
+                x++;
+                if(x > 3){
+                    y++;
+                    x=0;
+                    if(y === 2){
+                        alert("Last");
+                    }
+                }
+            });
+            */
+             
+            var FPS = 120;
+            var canvas = document.getElementById('c1');
+            
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            var ctx = canvas.getContext('2d');
+            var startPoint;
+            var mapOffset = {
+                x: 0,
+                y: 0
+            };
+            var scrollOffset = {
+                x: 0,
+                y: 0
+            };
+            canvas.addEventListener("mousedown", function(e){
+                startPoint = {
+                    x: e.pageX,
+                    y: e.pageY
+                };
+            });
+            
+            canvas.addEventListener("mousemove", function(e){
+                if(startPoint){
+                    scrollOffset.x = startPoint.x - e.pageX;
+                    scrollOffset.y = startPoint.y - e.pageY;
+                    
+                    scrollOffset.x = Math.max(scrollOffset.x, 0);
+                    scrollOffset.x = Math.min(scrollOffset.x, map.width-window.innerWidth);
+                    
+                    scrollOffset.y = Math.max(scrollOffset.y, 0);
+                    scrollOffset.y = Math.min(scrollOffset.y, map.height-window.innerHeight);
+                }
+            });
+            
+            canvas.addEventListener("mouseup" , function(){
+               mapOffset.x += scrollOffset.x;
+               mapOffset.y += scrollOffset.y;
+               scrollOffset.x = 0;
+               scrollOffset.y = 0;
+               startPoint = false; 
+            });
+            
+            var canvasWidth = canvas.width;
+            var canvasHeight = canvas.height;
+            
+            var render = function(){
+                console.timeEnd("render");
+                console.time("render");
+                setTimeout(render, 3);
+                ctx.drawImage(map, mapOffset.x+scrollOffset.x, mapOffset.y+scrollOffset.y, canvasWidth, canvasHeight, 0, 0 , canvasWidth, canvasHeight);
+            };
+            
+            var map = document.createElement("img");
+            map.onload = function(){
+                console.time("render");
+                render();
+            };
+            map.src = "map.png";
+            //map.src = "map2.jpg";
+        </script>
+    </body>
+</html>
