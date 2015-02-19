@@ -1,5 +1,5 @@
 
-var frameEach = 3; //in millis
+var frameEach = 0; //in millis
 var tileWidth = 512;
 var tileHeight = 512;
 
@@ -11,6 +11,7 @@ var cropCtx = cropCanvas.getContext('2d');
 
 var tiles = {};
 var tilesLoaded = 0;
+var speed = document.getElementById("speed");
 
 var loaderCallback = function () {
     if (++tilesLoaded === xTileCount * yTileCount) {
@@ -18,7 +19,7 @@ var loaderCallback = function () {
         cropCanvas.hidden = true;
         render();
         setInterval(function(){
-            console.log(getAvgFrameTime());
+            speed.innerHTML = getAvgFrameTime() + " ms";
         },2000);
     }
 };
