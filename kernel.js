@@ -1,7 +1,26 @@
+var getUrlParams = function () {
+    var params = {};
+    var search = window.location.search;
+    if (search) {
+        search = search.split('?')[1];
+        if (search) {
+            var paramStrings = search.split('&');
+            for(var i in paramStrings){
+                var string = paramStrings[i];
+                var pair = string.split('=');
+                params[pair[0]] = pair[1];
+            }
+        }
+    }
+    return params;
+};
+
+
+var params = getUrlParams();
 
 var frameEach = 0; //in millis
-var tileWidth = 512;
-var tileHeight = 512;
+var tileWidth =  params['tiles'] ? parseInt(params['tiles'],10) : 128;
+var tileHeight = params['tiles'] ? parseInt(params['tiles'],10) : 128;
 
 var cropCanvas = document.getElementById("crop1");
 cropCanvas.width = tileWidth;
@@ -19,7 +38,7 @@ var loaderCallback = function () {
         cropCanvas.hidden = true;
         render();
         setInterval(function(){
-            speed.innerHTML = getAvgFrameTime() + " ms";
+            speed.innerHTML = getAvgFrameTime() + " ms<br/> Tile Dim: "+tileWidth;
         },2000);
     }
 };
@@ -61,10 +80,17 @@ var mapOffset = {
     x: 0,
     y: 0
 };
+
 var scrollOffset = {
     x: 0,
     y: 0
 };
+
+var lastShift = {
+    x: 0,
+    y: 0
+};
+
 canvas.addEventListener("mousedown", function (e) {
     startPoint = {
         x: e.pageX,
@@ -99,6 +125,8 @@ var canvasHeight = canvas.height;
 var framesDuration = [];
 var lastFrame = 0;
 
+var initial = true;
+
 var pushFrameTime = function(){
     now = new Date();
     framesDuration.push(now-lastFrame);
@@ -132,45 +160,78 @@ var render = function () {
     var incY = 0;
 
     //ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-    var sx, sy, sw, sh, dx, dy;
-
-    for (var x = startXIndex; x <= endXIndex; x++) {
-        for (var y = startYIndex; y <= endYIndex; y++) {
-            sx = 0;
-            sy = 0;
-            dx = incX;
-            dy = incY;
-            
-            if (incX + tileWidth < canvas.width) {
-                sw = tileWidth;
-            } else {
-                sw = canvasWidth - incX;
-            }
-            
-            if(incY+tileHeight < canvas.height){
-                sh = tileHeight;
-            } else {
-                sh = canvasHeight - incY;
-            }
-
-            if (startXIndex === x) {
-                sx = scrollToX - x * tileWidth;
-                dx = 0;
-                sw = tileWidth - sx;
-            }
-
-            if (startYIndex === y) {
-                sy = scrollToY - y * tileHeight;
-                dy = 0; 
-                sh = tileHeight - sy;
-            }
-            
-            ctx.drawImage(tiles[x + "-" + y], sx, sy, sw, sh, dx, dy, sw, sh);
-            incY += sh;
+    
+    var shift = {
+        x: lastShift.x - scrollToX,
+        y: lastShift.y - scrollToY
+    };
+    
+    var hasShift = shift.x !== 0 || shift.y !== 0;
+    
+    if(hasShift){
+        ctx.drawImage(canvas, shift.x, shift.y);
+        if(shift.x < 0){
+            startXIndex += Math.floor(shift.x/tileWidth);
+            startXIndex = Math.max(0,startXIndex);
+        } else {
+            endXIndex -= Math.ceil(shift.x/tileWidth);
+            endXIndex = Math.min(endXIndex,xTileCount-1);
         }
-        incX += sw;
-        incY = 0;
+        
+        if(shift.y < 0){
+            startYIndex += Math.floor(shift.y/tileHeight);
+            startYIndex = Math.max(0,startYIndex);
+        } else {
+            endYIndex -= Math.ceil(shift.y/tileHeight);
+            endYIndex = Math.min(endYIndex,yTileCount-1);
+        }
+    }
+    
+    if (hasShift || initial) {
+        initial = false;
+        var sx, sy, sw, sh, dx, dy;
+
+        for (var x = startXIndex; x <= endXIndex; x++) {
+            for (var y = startYIndex; y <= endYIndex; y++) {
+                sx = 0;
+                sy = 0;
+                dx = incX;
+                dy = incY;
+
+                if (incX + tileWidth < canvas.width) {
+                    sw = tileWidth;
+                } else {
+                    sw = canvasWidth - incX;
+                }
+
+                if (incY + tileHeight < canvas.height) {
+                    sh = tileHeight;
+                } else {
+                    sh = canvasHeight - incY;
+                }
+
+                if (startXIndex === x) {
+                    sx = scrollToX - x * tileWidth;
+                    dx = 0;
+                    sw = tileWidth - sx;
+                }
+
+                if (startYIndex === y) {
+                    sy = scrollToY - y * tileHeight;
+                    dy = 0;
+                    sh = tileHeight - sy;
+                }
+
+                ctx.drawImage(tiles[x + "-" + y], sx, sy, sw, sh, dx, dy, sw, sh);
+                incY += sh;
+            }
+            incX += sw;
+            incY = 0;
+        }
     }
 
+    lastShift = {
+        x: scrollToX,
+        y: scrollToY
+    };
 };
